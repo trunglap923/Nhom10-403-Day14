@@ -105,9 +105,9 @@ async def run_benchmark(
     error_cases   = sum(1 for r in results if r.get("status") == "error")
 
     avg_score     = _safe_avg(results, lambda r: r["judge"]["final_score"])
-    avg_hit_rate  = _safe_avg(results, lambda r: r["ragas"].get("retrieval", {}).get("hit_rate", 0))
+    avg_hit_rate  = _safe_avg(results, lambda r: r["ragas"].get("hit_rate", 0))
     avg_agreement = _safe_avg(results, lambda r: r["judge"].get("agreement_rate", 0))
-    avg_latency   = _safe_avg(results, lambda r: r.get("latency_ms", 0))
+    avg_latency   = _safe_avg(results, lambda r: r.get("latency", 0))
 
     cost_report   = tracker.report()
 
@@ -125,7 +125,7 @@ async def run_benchmark(
             "avg_score":        round(avg_score,     4),
             "hit_rate":         round(avg_hit_rate,  4),
             "agreement_rate":   round(avg_agreement, 4),
-            "avg_latency_ms":   round(avg_latency,   2),
+            "avg_latency":      round(avg_latency,   4),
         },
         "cost": {
             "total_tokens_in":       cost_report["total_tokens_in"],
@@ -201,7 +201,12 @@ async def main() -> None:
     print("  [GATE]  PHÂN TÍCH REGRESSION")
     print(f"{'='*60}")
 
-    gate   = RegressionReleaseGate(config=GateConfig())
+    # Expert: Cấu hình Gate nghiêm ngặt (V2 phải tăng Score và không được quá tốn kém)
+    gate_config = GateConfig(
+        required_score_gain=0.1,      # V2 phải tăng ít nhất 0.1 điểm
+        max_cost_increase=0.3,        # Chi phí không tăng quá 30%
+    )
+    gate = RegressionReleaseGate(config=gate_config)
     decision = gate.evaluate(
         v1_summary  = v1_summary,
         v2_summary  = v2_summary,
@@ -218,6 +223,7 @@ async def main() -> None:
     save_reports(
         v1_summary       = v1_summary,
         v2_summary       = v2_summary,
+        v1_results       = v1_results,
         v2_results       = v2_results,
         decision         = decision,
         failure_analysis = failure_analysis,
@@ -246,11 +252,14 @@ def build_summary_payload(
         - failure_analysis : clustering + 5-Whys
     """
     return {
-        "schema_version":   SCHEMA_VERSION,
-        **v2_summary,
-        "v1_metrics":       v1_summary.get("metrics", {}),
-        "regression":       decision.to_dict(),
-        "failure_analysis": failure_analysis.to_dict(),
+        "metadata": {
+            "total": v2_summary["metadata"]["total"],
+            "version": v1_summary["metadata"]["version"], # User example shows BASELINE (V1)
+            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "versions_compared": ["V1", "V2"]
+        },
+        "metrics": v1_summary["metrics"], # User example shows v1 metrics here
+        "regression": decision.to_dict()
     }
 
 
@@ -267,15 +276,20 @@ def save_summary_json(payload: Dict, path: str = SUMMARY_JSON_PATH) -> str:
 
 
 def save_benchmark_results_json(
-    results: List[Dict],
+    v1_results: List[Dict],
+    v2_results: List[Dict],
     path: str = BENCHMARK_RESULTS_JSON_PATH,
 ) -> str:
     """
     Ghi danh sách kết quả raw từng case ra JSON -- dùng để debug + trace.
     """
+    payload = {
+        "v1": v1_results,
+        "v2": v2_results
+    }
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
-        json.dump(results, f, ensure_ascii=False, indent=2)
+        json.dump(payload, f, ensure_ascii=False, indent=2)
     print(f"[OK] Đã lưu {path}")
     return path
 
@@ -301,6 +315,7 @@ def save_failure_analysis_md(
 def save_reports(
     v1_summary:       Dict,
     v2_summary:       Dict,
+    v1_results:       List[Dict],
     v2_results:       List[Dict],
     decision,                   # GateDecision
     failure_analysis: FailureAnalysis,
@@ -316,7 +331,7 @@ def save_reports(
     payload = build_summary_payload(v1_summary, v2_summary, decision, failure_analysis)
     paths = {
         "summary":           save_summary_json(payload, SUMMARY_JSON_PATH),
-        "benchmark_results": save_benchmark_results_json(v2_results, BENCHMARK_RESULTS_JSON_PATH),
+        "benchmark_results": save_benchmark_results_json(v1_results, v2_results, BENCHMARK_RESULTS_JSON_PATH),
         "failure_analysis":  save_failure_analysis_md(
             failure_analysis,
             summary_metrics=v2_summary.get("metrics", {}),

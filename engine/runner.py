@@ -152,7 +152,7 @@ class BenchmarkRunner:
                 self.agent.query(test_case["question"]),
                 timeout=self.timeout,
             )
-            latency_ms = (time.perf_counter() - start) * 1000
+            latency_sec = (time.perf_counter() - start)
 
             # -- Ghi nhận token & cost (nếu agent trả về metadata) ------
             metadata   = response.get("metadata", {})
@@ -164,7 +164,7 @@ class BenchmarkRunner:
                 model=model_name,
                 tokens_in=tokens_in,
                 tokens_out=tokens_out,
-                latency_ms=round(latency_ms, 2),
+                latency_ms=round(latency_sec * 1000, 2),
                 case_id=case_id,
             )
 
@@ -191,7 +191,7 @@ class BenchmarkRunner:
                 "case_id":        case_id,
                 "test_case":      test_case["question"],
                 "agent_response": response["answer"],
-                "latency_ms":     round(latency_ms, 2),
+                "latency":        latency_sec,
                 "tokens_in":      tokens_in,
                 "tokens_out":     tokens_out,
                 "model":          model_name,
@@ -271,12 +271,12 @@ class BenchmarkRunner:
             "case_id":        case_id,
             "test_case":      test_case.get("question", ""),
             "agent_response": "",
-            "latency_ms":     0.0,
+            "latency":        0.0,
             "tokens_in":      0,
             "tokens_out":     0,
             "model":          "unknown",
             "ragas":          {},
-            "judge":          {"final_score": 0, "agreement_rate": 0},
+            "judge":          {"final_score": 0, "agreement_rate": 0, "status": "error", "individual_results": {}},
             "status":         "error",
             "error":          f"{error_type}: {detail}",
         }
