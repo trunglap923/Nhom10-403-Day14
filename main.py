@@ -35,6 +35,8 @@ from agent.main_agent import MainAgent
 from engine.cost_tracker import CostTracker
 from engine.release_gate import GateConfig, RegressionReleaseGate
 from engine.runner import BenchmarkRunner
+from agent.main_agent import MainAgent
+from engine.llm_judge import LLMJudge
 
 # ---------------------------------------------------------------------------
 # Mock components cho TV2, TV3 (sẽ thay bằng module thật khi đồng đội xong)
@@ -55,21 +57,6 @@ class _MockEvaluator:
                 "hit_rate": 1.0 if resp.get("contexts") else 0.0,
                 "mrr":      0.75,
             },
-        }
-
-
-class _MockJudge:
-    """Stub đại diện cho TV3 -- MultiModelJudge."""
-    async def evaluate_multi_judge(self, question: str, answer: str, ground_truth: str) -> Dict:
-        # Mô phỏng 2 model judge với điểm khác nhau
-        score_a = 4
-        score_b = 3 if len(answer) < 30 else 4
-        avg     = (score_a + score_b) / 2
-        return {
-            "final_score":        avg,
-            "agreement_rate":     1.0 if score_a == score_b else 0.5,
-            "individual_scores":  {"gpt-4o": score_a, "gemini-1.5-pro": score_b},
-            "reasoning":          "Mô phỏng: câu trả lời đủ thông tin.",
         }
 
 
@@ -105,7 +92,7 @@ async def run_benchmark(
     runner = BenchmarkRunner(
         agent       = MainAgent(),
         evaluator   = _MockEvaluator(),   # TODO: Thay bằng RetrievalEvaluator() khi TV2 xong
-        judge       = _MockJudge(),        # TODO: Thay bằng LLMJudge() khi TV3 xong
+        judge       = LLMJudge(["gpt-4o-mini", "gpt-4o"]), # Đã cắm LLMJudge của TV3
         concurrency = concurrency,
         max_retries = 2,
         tracker     = tracker,
