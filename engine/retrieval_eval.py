@@ -4,6 +4,38 @@ class RetrievalEvaluator:
     def __init__(self):
         pass
 
+    async def score(self, test_case: Dict, response: Dict) -> Dict:
+        """
+        Interface tương thích với BenchmarkRunner.
+        Runner gọi: evaluator.score(test_case, response)
+        
+        Args:
+            test_case: dict chứa expected_retrieval_ids
+            response: dict chứa retrieved_ids từ agent
+            
+        Returns:
+            Dict với faithfulness, relevancy, và retrieval metrics (hit_rate, mrr)
+        """
+        expected_ids = test_case.get("expected_retrieval_ids", [])
+        retrieved_ids = response.get("retrieved_ids", [])
+        
+        hit_rate = self.calculate_hit_rate(expected_ids, retrieved_ids)
+        mrr = self.calculate_mrr(expected_ids, retrieved_ids)
+        
+        # Faithfulness/Relevancy ước tính từ retrieval quality
+        # (retrieval tốt → context đúng → câu trả lời chính xác hơn)
+        faithfulness = min(1.0, hit_rate * 0.7 + mrr * 0.3)
+        relevancy = min(1.0, hit_rate * 0.5 + mrr * 0.5)
+        
+        return {
+            "faithfulness": round(faithfulness, 4),
+            "relevancy": round(relevancy, 4),
+            "retrieval": {
+                "hit_rate": hit_rate,
+                "mrr": round(mrr, 4),
+            }
+        }
+
     def calculate_hit_rate(self, expected_ids: List[str], retrieved_ids: List[str], top_k: int = 3) -> float:
         """
         Tính toán xem ít nhất 1 trong expected_ids có nằm trong top_k của retrieved_ids không.

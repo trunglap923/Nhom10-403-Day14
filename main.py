@@ -72,7 +72,7 @@ async def run_benchmark(
     runner = BenchmarkRunner(
         agent       = MainAgent(is_optimized=("V2" in agent_version)),
         evaluator   = RetrievalEvaluator(),
-        judge       = LLMJudge(["gpt-4o-mini", "gpt-4o"]),
+        judge       = LLMJudge(["gpt-4o-mini", "gpt-4o-mini"]), # Cứu ví thành viên 3
         concurrency = concurrency,
         max_retries = 2,
         tracker     = tracker,
