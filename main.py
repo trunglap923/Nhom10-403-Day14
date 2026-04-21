@@ -19,6 +19,7 @@ Thành viên 4 chịu trách nhiệm:
 """
 
 from __future__ import annotations
+from engine.retrieval_eval import RetrievalEvaluator
 
 import asyncio
 import json
@@ -37,28 +38,6 @@ from engine.release_gate import GateConfig, RegressionReleaseGate
 from engine.runner import BenchmarkRunner
 from agent.main_agent import MainAgent
 from engine.llm_judge import LLMJudge
-
-# ---------------------------------------------------------------------------
-# Mock components cho TV2, TV3 (sẽ thay bằng module thật khi đồng đội xong)
-# ---------------------------------------------------------------------------
-# [WARN]  Khi TV2 n?p engine/retrieval_eval.py ? uncomment d?ng d??i:
-# from engine.retrieval_eval import RetrievalEvaluator  # noqa
-# [WARN]  Khi TV3 n?p engine/llm_judge.py ? uncomment d?ng d??i:
-# from engine.llm_judge import LLMJudge                 # noqa
-
-class _MockEvaluator:
-    """Stub đại diện cho TV2 -- RetrievalEvaluator."""
-    async def score(self, case: Dict, resp: Dict) -> Dict:
-        # Mô phỏng kết quả RAGAS + Retrieval
-        return {
-            "faithfulness": 0.88,
-            "relevancy":    0.82,
-            "retrieval": {
-                "hit_rate": 1.0 if resp.get("contexts") else 0.0,
-                "mrr":      0.75,
-            },
-        }
-
 
 # ---------------------------------------------------------------------------
 # Hàm chạy benchmark cho 1 phiên bản agent
@@ -89,10 +68,11 @@ async def run_benchmark(
         tracker = CostTracker()
 
     # -- Khởi tạo Runner với Async + CostTracker ----------------------
+    # Tự động gán cờ is_optimized=True nếu là V2 để có sự phân biệt!
     runner = BenchmarkRunner(
-        agent       = MainAgent(),
-        evaluator   = _MockEvaluator(),   # TODO: Thay bằng RetrievalEvaluator() khi TV2 xong
-        judge       = LLMJudge(["gpt-4o-mini", "gpt-4o"]), # Đã cắm LLMJudge của TV3
+        agent       = MainAgent(is_optimized=("V2" in agent_version)),
+        evaluator   = RetrievalEvaluator(),
+        judge       = LLMJudge(["gpt-4o-mini", "gpt-4o"]),
         concurrency = concurrency,
         max_retries = 2,
         tracker     = tracker,
