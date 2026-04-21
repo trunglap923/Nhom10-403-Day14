@@ -1,0 +1,30 @@
+{
+  "metadata": {
+    "total": 71,
+    "version": "Agent_V1_Base",
+    "timestamp": "2026-04-21 18:08:11",
+    "versions_compared": [
+      "V1",
+      "V2"
+    ]
+  },
+  "metrics": {
+    "avg_score": 3.9648,
+    "hit_rate": 0.8169,
+    "agreement_rate": 0.9965,
+    "avg_latency": 1.3571
+  },
+  "regression": {
+    "v1": {
+      "score": 3.9648,
+      "hit_rate": 0.8169,
+      "judge_agreement": 0.9965
+    },
+    "v2": {
+      "score": 4.4577,
+      "hit_rate": 0.8732,
+      "judge_agreement": 0.9965
+    },
+    "decision": "ROLLBACK"
+  }
+}

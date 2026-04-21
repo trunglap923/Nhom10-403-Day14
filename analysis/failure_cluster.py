@@ -169,9 +169,8 @@ class FailureClusterer:
 
         # -- 3) Các trường hợp FAIL, phân nhánh --------------------------
         ragas = result.get("ragas", {}) or {}
-        retrieval = ragas.get("retrieval", {}) or {}
-        hit_rate  = float(retrieval.get("hit_rate") or 0)
-        mrr       = float(retrieval.get("mrr") or 0)
+        hit_rate  = float(ragas.get("hit_rate") or 0)
+        mrr       = float(ragas.get("mrr") or 0)
         answer    = str(result.get("agent_response") or "")
 
         # 3a) Retrieval hỏng hoàn toàn -> Context Miss

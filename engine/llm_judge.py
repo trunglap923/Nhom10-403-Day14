@@ -102,9 +102,16 @@ class LLMJudge:
             "final_score": final_score,
             "agreement_rate": agreement,
             "conflict_detected": conflict_detected,
-            "individual_scores": {
-                model_a: score_a,
-                model_b: score_b
+            "status": "conflict" if conflict_detected else "consensus",
+            "individual_results": {
+                model_a: {
+                    "score": score_a,
+                    "reasoning": res_a.get("reasoning", "No reasoning provided")
+                },
+                model_b: {
+                    "score": score_b,
+                    "reasoning": res_b.get("reasoning", "No reasoning provided")
+                }
             },
             "reasoning": f"[{model_a}]: {res_a.get('reasoning')} | [{model_b}]: {res_b.get('reasoning')}",
             "resolution": resolution_reason,

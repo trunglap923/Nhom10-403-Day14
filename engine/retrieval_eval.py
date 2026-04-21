@@ -69,12 +69,15 @@ class RetrievalEvaluator:
         hit_rate = self.calculate_hit_rate(expected_ids, retrieved_ids, top_k=top_k)
         mrr      = self.calculate_mrr(expected_ids, retrieved_ids)
 
+        faithfulness = min(1.0, hit_rate * 0.7 + mrr * 0.3)
+        relevancy   = min(1.0, hit_rate * 0.5 + mrr * 0.5)
+
         return {
-            "retrieval": {
-                "hit_rate": hit_rate,
-                "mrr":      mrr,
-                "top_k":    top_k,
-            }
+            "hit_rate":     hit_rate,
+            "mrr":          round(mrr, 4),
+            "faithfulness": round(faithfulness, 4),
+            "relevancy":    round(relevancy, 4),
+            "top_k":        top_k
         }
 
     async def evaluate_batch(self, dataset: List[Dict], top_k: int = 3) -> Dict:

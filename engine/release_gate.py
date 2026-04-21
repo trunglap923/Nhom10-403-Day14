@@ -95,26 +95,21 @@ class GateDecision:
     v2_summary:   Dict = field(default_factory=dict)
 
     def to_dict(self) -> Dict:
+        v1_m = self.v1_summary.get("metrics", {})
+        v2_m = self.v2_summary.get("metrics", {})
+        
         return {
-            "decision":   self.decision,
-            "confidence": round(self.confidence, 4),
-            "reasons":    self.reasons,
-            "warnings":   self.warnings,
-            "dimensions": [
-                {
-                    "name":      d.name,
-                    "v1":        round(d.v1_value, 4),
-                    "v2":        round(d.v2_value, 4),
-                    "delta":     round(d.delta, 4),
-                    "delta_pct": f"{d.delta_pct:+.1f}%",
-                    "passed":    d.passed,
-                    "is_hard":   d.is_hard,
-                    "message":   d.message,
-                }
-                for d in self.dimensions
-            ],
-            "v1_metrics": self.v1_summary.get("metrics", {}),
-            "v2_metrics": self.v2_summary.get("metrics", {}),
+            "v1": {
+                "score": v1_m.get("avg_score", 0),
+                "hit_rate": v1_m.get("hit_rate", 0),
+                "judge_agreement": v1_m.get("agreement_rate", 0)
+            },
+            "v2": {
+                "score": v2_m.get("avg_score", 0),
+                "hit_rate": v2_m.get("hit_rate", 0),
+                "judge_agreement": v2_m.get("agreement_rate", 0)
+            },
+            "decision": self.decision
         }
 
     def print_report(self) -> None:

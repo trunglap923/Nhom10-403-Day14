@@ -2,9 +2,6 @@
 __pycache__/
 *.pyc
 .DS_Store
-reports/
-# data/golden_set.jsonl
-# data/chroma_db/
 venv/
 
 Nhom10-403-Day08/
