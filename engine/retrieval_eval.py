@@ -23,6 +23,28 @@ class RetrievalEvaluator:
                 return 1.0 / (i + 1)
         return 0.0
 
+    async def score(self, test_case: Dict, response: Dict, top_k: int = 3) -> Dict:
+        """
+        Adapter được BenchmarkRunner gọi cho từng test case.
+        Tính hit_rate + MRR của 1 case duy nhất, trả về dict có shape:
+            {"retrieval": {"hit_rate": float, "mrr": float, "top_k": int}}
+        Đây chính là shape mà main.py (Thành viên 5) và failure_cluster.py
+        expect khi ghép metric cho summary.json.
+        """
+        expected_ids  = test_case.get("expected_retrieval_ids", []) or []
+        retrieved_ids = response.get("retrieved_ids", []) or []
+
+        hit_rate = self.calculate_hit_rate(expected_ids, retrieved_ids, top_k=top_k)
+        mrr      = self.calculate_mrr(expected_ids, retrieved_ids)
+
+        return {
+            "retrieval": {
+                "hit_rate": hit_rate,
+                "mrr":      mrr,
+                "top_k":    top_k,
+            }
+        }
+
     async def evaluate_batch(self, dataset: List[Dict], top_k: int = 3) -> Dict:
         """
         Chạy eval cho toàn bộ bộ dữ liệu.
