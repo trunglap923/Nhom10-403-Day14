@@ -12,7 +12,7 @@ class LLMJudge:
 
     async def evaluate_multi_judge(self, question: str, answer: str, ground_truth: str) -> Dict[str, Any]:
         """
-        EXPERT TASK: Gọi ít nhất 2 model (ví dụ GPT-4o và Claude).
+        EXPERT TASK: Gọi ít nhất 2 model (ví dụ GPT-4o và Gemini).
         Tính toán sự sai lệch. Nếu lệch > 1 điểm, cần logic xử lý.
         """
         # Giả lập gọi 2 model
@@ -25,7 +25,7 @@ class LLMJudge:
         return {
             "final_score": avg_score,
             "agreement_rate": agreement,
-            "individual_scores": {"gpt-4o": score_a, "claude-3-5": score_b}
+            "individual_scores": {"gpt-4o": score_a, "gemini-1.5-pro": score_b}
         }
 
     async def check_position_bias(self, response_a: str, response_b: str):
