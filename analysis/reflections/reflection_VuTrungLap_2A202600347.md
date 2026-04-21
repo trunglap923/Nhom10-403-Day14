@@ -1,6 +1,7 @@
 # Individual Reflection - RAG Evaluation Specialist
 
-**Họ và tên:** [Tên_Của_Bạn]
+**Họ và tên:** Vũ Trung Lập
+**MSSV:** 2A202600347
 **Vai trò:** QA, Data & Search Engineer (Phụ trách Dataset & Retrieval Metrics)
 
 ---
